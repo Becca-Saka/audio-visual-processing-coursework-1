@@ -1,10 +1,7 @@
 import glob
 import pickle
 import random
-
-import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import soundfile as sf
 from keras.layers import InputLayer
 from keras.models import Sequential
@@ -16,22 +13,12 @@ from sklearn import metrics
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import shuffle
+from plot_bar import *
 
 model_name = "mel/model_weights.weights.h5"
 encoder_name = "mel/label_encoder.pkl"
 normalizer_name = "mel/norm_stats.npz"
 output_name = "mel/correct_predictions.png"
-
-
-def magAndPhase(speechFrame):
-    window = np.hamming(len(speechFrame))
-    windowedFrame = speechFrame * window
-    xF = np.fft.fft(windowedFrame.squeeze())
-    magSpec = np.abs(xF)
-    phaseSpec = np.angle(xF)
-    half = len(magSpec) // 2
-    return magSpec[:half], phaseSpec[:half]
-
 
 def hz_to_mel(hz):
     return 2595 * np.log10(1 + hz / 700.0)
@@ -60,17 +47,6 @@ def mel_filterbank(num_filters=26, n_fft=512, fs=16000, min_hz=0, max_hz=None):
         for k in range(f_m, f_m_plus):
             fbanks[m - 1, k] = (f_m_plus - k) / (f_m_plus - f_m)
     return fbanks
-
-
-def linearRectangularFilterbank(magspec, numChannels):
-    step = len(magspec) // numChannels
-    fbank = np.zeros(numChannels)
-    for i in range(numChannels):
-        start = i * step
-        end = start + step
-        fbank[i] = np.log(np.sum(magspec[start:end]) + 1e-8)
-
-    return fbank
 
 
 def labelEncoder(labels):
@@ -233,26 +209,7 @@ for audio_file in sorted(glob.glob('names_audio_wav/*.wav')):
         'Predicted Name': predicted_name
     })
 
-df = pd.DataFrame(results)
-
-df['Correct'] = df['Actual Name'].str.lower() == df['Predicted Name'].str.lower()
-
-accuracy_counts = df.groupby('Actual Name')['Correct'].sum().reset_index()
-accuracy_counts.rename(columns={'Correct': 'Correct Predictions'}, inplace=True)
-
-plt.figure(figsize=(10, 6))
-bars = plt.bar(accuracy_counts['Actual Name'], accuracy_counts['Correct Predictions'], color='skyblue')
-
-for bar in bars:
-    yval = bar.get_height()
-    plt.text(bar.get_x() + bar.get_width() / 2, yval + 0.2, int(yval), ha='center', va='bottom', fontsize=10)
-
-plt.title('Correct Predictions per Person')
-plt.xlabel('Person')
-plt.ylabel('Number of Correct Predictions')
-plt.xticks(rotation=45)
-plt.tight_layout()
-plt.savefig(output_name, dpi=300)
+plot_bar_chart(output_name, results)
 
 # test_audio_path = 'names_audio_wav/Zack001.wav'
 # print(f"\n🎤 File: {test_audio_path}")
