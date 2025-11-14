@@ -85,7 +85,7 @@ class SoundClass():
                 buffer.append(frame)
 
                 if rms > threshold:
-                    print("Started talking.")
+                    # print("Started talking.")
                     started_talking = True
                     silence_count = 0
                 elif started_talking:
@@ -95,7 +95,7 @@ class SoundClass():
                 if started_talking and silence_count > silence_limit:
                     print("Detected silence — stopping recording.")
                     break
-                print("Silence count: ", silence_count)
+                # print("Silence count: ", silence_count)
                 # fallback timeout
                 if (time.time() - start_time) > seconds:
                     print("Max recording time reached.")
