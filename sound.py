@@ -40,8 +40,11 @@ class SoundClass():
         print("Playing...")
         sd.play(r, fs)
         sd.wait()
+        self.save(r,fs,filename)
+
+    def save(self, data, frame, filename):
         print("Saving recording...")
-        sf.write(f"{filename}.wav", r, fs)
+        sf.write(f"{filename}.wav", data, frame)
 
     def record_nsa(self, fs, seconds, device=None):
             sd.default.device = [3, 2]   # [input, output]
@@ -61,10 +64,10 @@ class SoundClass():
         silence_limit = int((silence_ms / 1000) / 0.03)
         min_talk_frames = int((min_talk_ms / 1000) / 0.03)
 
-        # --- Step 1: Calibrate baseline noise level ---
+
         with sd.InputStream(samplerate=fs, channels=1, dtype='float32') as stream:
             noise_frames = []
-            for _ in range(10):  # ~0.3s calibration
+            for _ in range(10):
                 frame, _ = stream.read(frame_len)
                 noise_frames.append(np.sqrt(np.mean(frame ** 2)))
             baseline = np.mean(noise_frames)
@@ -77,7 +80,7 @@ class SoundClass():
         started_talking = False
         start_time = time.time()
 
-        # --- Step 2: Actual recording ---
+
         with sd.InputStream(samplerate=fs, channels=1, dtype='float32') as stream:
             while True:
                 frame, _ = stream.read(frame_len)
@@ -85,7 +88,7 @@ class SoundClass():
                 buffer.append(frame)
 
                 if rms > threshold:
-                    # print("Started talking.")
+
                     started_talking = True
                     silence_count = 0
                 elif started_talking:
@@ -95,8 +98,6 @@ class SoundClass():
                 if started_talking and silence_count > silence_limit:
                     print("Detected silence — stopping recording.")
                     break
-                # print("Silence count: ", silence_count)
-                # fallback timeout
                 if (time.time() - start_time) > seconds:
                     print("Max recording time reached.")
                     break
